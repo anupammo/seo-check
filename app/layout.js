@@ -19,6 +19,57 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+          <head>
+            <meta charSet="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <meta name="theme-color" content="#2563eb" />
+            <meta name="description" content="SEO Analyzer is a professional website SEO analysis dashboard. Monitor, audit, and improve your website's search engine performance with actionable insights, checklists, and reports." />
+            <meta name="keywords" content="SEO, SEO Analyzer, Website Audit, SEO Dashboard, Search Engine Optimization, Website Analysis, SEO Tools, Performance, Content Analysis, Keyword Research" />
+            <meta name="author" content="SEO Analyzer Team" />
+            <link rel="icon" href="/seo-analyzer-logo.svg" />
+            <link rel="apple-touch-icon" href="/seo-analyzer-logo.svg" />
+            <link rel="manifest" href="/manifest.json" />
+            {/* Open Graph / Facebook */}
+            <meta property="og:type" content="website" />
+            <meta property="og:url" content="https://your-seo-analyzer.com/" />
+            <meta property="og:title" content="SEO Analyzer - Website SEO Analysis Dashboard" />
+            <meta property="og:description" content="Monitor, audit, and improve your website's SEO with actionable insights, checklists, and reports." />
+            <meta property="og:image" content="/seo-analyzer-logo.svg" />
+            {/* Twitter Card */}
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:url" content="https://your-seo-analyzer.com/" />
+            <meta name="twitter:title" content="SEO Analyzer - Website SEO Analysis Dashboard" />
+            <meta name="twitter:description" content="Monitor, audit, and improve your website's SEO with actionable insights, checklists, and reports." />
+            <meta name="twitter:image" content="/seo-analyzer-logo.svg" />
+            {/* Structured Data (JSON-LD) */}
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebApplication',
+              name: 'SEO Analyzer',
+              url: 'https://your-seo-analyzer.com/',
+              description: "SEO Analyzer is a professional website SEO analysis dashboard. Monitor, audit, and improve your website's search engine performance with actionable insights, checklists, and reports.",
+              applicationCategory: 'BusinessApplication',
+              image: '/seo-analyzer-logo.svg',
+              offers: {
+                '@type': 'Offer',
+                price: '0',
+                priceCurrency: 'USD',
+                availability: 'https://schema.org/OnlineOnly',
+              },
+              author: {
+                '@type': 'Organization',
+                name: 'SEO Analyzer Team',
+                url: 'https://your-seo-analyzer.com/'
+              }
+            }) }} />
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+            <link rel="stylesheet" href="/globals.css" />
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+            <link rel="preconnect" href="https://fonts.googleapis.com" />
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
+            <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
+            <title>SEO Analyzer - Website SEO Analysis Dashboard</title>
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         {children}
       </body>

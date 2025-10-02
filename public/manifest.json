@@ -1,0 +1,16 @@
+{
+  "name": "SEO Analyzer",
+  "short_name": "SEOAnalyzer",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#2563eb",
+  "theme_color": "#2563eb",
+  "description": "Professional website SEO analysis dashboard.",
+  "icons": [
+    {
+      "src": "/seo-analyzer-logo.svg",
+      "sizes": "120x120",
+      "type": "image/svg+xml"
+    }
+  ]
+}
