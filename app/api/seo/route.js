@@ -110,6 +110,20 @@ export async function POST(request) {
     if (sitemapXml) bestPractices.push('sitemap.xml found.');
     if (seo.viewport) bestPractices.push('Viewport meta tag present.');
 
+    // Calculate Onpage SEO Score (simple formula: bestPractices / (bestPractices + improvements))
+    const totalChecks = bestPractices.length + improvements.length;
+    const onpageSeoScore = totalChecks > 0 ? Math.round((bestPractices.length / totalChecks) * 100) : 0;
+
+    // Broken links: links that return 404 (check up to 10 for performance)
+    let brokenLinks = 0;
+    const checkLinks = seo.links.slice(0, 10); // limit for demo/performance
+    for (const link of checkLinks) {
+      try {
+        const res = await fetch(link, { method: 'HEAD', redirect: 'manual' });
+        if (res.status === 404) brokenLinks++;
+      } catch {}
+    }
+
     // Report
     const report = {
       title: seo.title,
@@ -120,10 +134,17 @@ export async function POST(request) {
       ogTitle: seo.ogTitle,
       ogDescription: seo.ogDescription,
       twitterCard: seo.twitterCard,
-      // This file is intentionally left blank to resolve route conflicts. Safe to delete.
       links: { total: seo.links.length, internal: internalLinks.length, external: externalLinks.length },
       bestPractices,
       improvements,
+      totalPages: 1, // Only the main page is analyzed; for multi-page, crawl sitemap
+      imagesMissingAlt: imagesMissingAlt.length,
+      onpageSeoScore,
+      brokenLinks,
+      headings: seo.headings,
+      images: seo.images,
+      robotsTxt: !!robotsTxt,
+      sitemapXml: !!sitemapXml,
     };
 
     return new Response(JSON.stringify(report), {
