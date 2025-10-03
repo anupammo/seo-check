@@ -242,14 +242,23 @@ seo-check/
 
 ## Release History
 
+### v0.2.0 (2025-10-03)
+- Full-scope SEO audit implemented:
+	- Backend API now returns a detailed, structured report matching a comprehensive SEO checklist (technical, on-page, internal linking, off-page, analytics, UX, and page-by-page audit).
+	- Dashboard UI updated to display all new report fields and sections, including a new "Pages" tab for page-by-page analysis.
+	- Website Overview now shows the analyzed domain, favicon, and timestamp.
+	- KPI cards updated: "Total Pages" replaces "Status Code"; all values are real, not demo.
+	- Error handling and loading states improved.
+	- Codebase ready for future multi-page crawling and advanced analytics.
+
 ### v0.1.0 (2025-10-03)
 - Initial release: Modular Next.js SEO dashboard with real-time analysis, KPI cards, checklist, audit, and recommendations.
 - Features:
-  - Modular folder structure (`components/`, `hooks/`, `services/`, `constants/`, etc.)
-  - Puppeteer-powered backend API for real SEO data
-  - Loading spinner and error handling
-  - Bootstrap, FontAwesome, and Google Fonts integration
-  - Only real data shown after user input (no demo data)
+	- Modular folder structure (`components/`, `hooks/`, `services/`, `constants/`, etc.)
+	- Puppeteer-powered backend API for real SEO data
+	- Loading spinner and error handling
+	- Bootstrap, FontAwesome, and Google Fonts integration
+	- Only real data shown after user input (no demo data)
 
 #### Planned/Upcoming
 - Multi-page crawling via sitemap.xml
