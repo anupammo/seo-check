@@ -56,7 +56,10 @@ export default function Home() {
                   {reportLoading ? <span className="spinner-border spinner-border-sm"></span> : <><i className="fas fa-search me-2"></i>Analyze</>}
                 </button>
               </form>
-              {reportError && <div className="alert alert-danger mt-2">{reportError}</div>}
+              {/* Error display, outside form but inside col-md-6 */}
+              {reportError && (
+                <div className="alert alert-danger mt-2">{reportError}</div>
+              )}
             </div>
           </div>
         </div>
@@ -83,9 +86,9 @@ export default function Home() {
                 <h6 className="fw-bold">Website Overview</h6>
                 <div className="d-flex align-items-center mt-3">
                   <div className="flex-shrink-0">
-                    {report && report.pageAudit.url ? (
+                    {report && report.pages && report.pages[0] && report.pages[0].url ? (
                       <img
-                        src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent((new URL(report.pageAudit.url)).hostname)}&sz=64`}
+                        src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent((new URL(report.pages[0].url)).hostname)}&sz=64`}
                         alt="Favicon"
                         className="rounded"
                         width={50}
@@ -98,12 +101,12 @@ export default function Home() {
                   </div>
                   <div className="flex-grow-1 ms-3">
                     <h6 className="mb-0">
-                      {report && report.pageAudit.url
-                        ? (new URL(report.pageAudit.url)).hostname
+                      {report && report.pages && report.pages[0] && report.pages[0].url
+                        ? (new URL(report.pages[0].url)).hostname
                         : 'Website'}
                     </h6>
                     <small className="text-muted">
-                      {report && report.pageAudit.url ? `Analyzed: ${new Date().toLocaleString()}` : 'No analysis yet'}
+                      {report && report.pages && report.pages[0] && report.pages[0].url ? `Analyzed: ${new Date().toLocaleString()}` : 'No analysis yet'}
                     </small>
                   </div>
                 </div>
@@ -139,7 +142,7 @@ export default function Home() {
                         <div className="card kpi-card">
                           <div className="card-body">
                             <i className="fas fa-file-alt fa-2x text-primary mb-2"></i>
-                            <div className="kpi-value">{report.pageAudit ? 1 : 0}</div>
+                            <div className="kpi-value">{report.pages ? report.pages.length : 0}</div>
                             <div className="kpi-label">Total Pages</div>
                           </div>
                         </div>
@@ -148,7 +151,7 @@ export default function Home() {
                         <div className="card kpi-card">
                           <div className="card-body">
                             <i className="fas fa-image fa-2x text-warning mb-2"></i>
-                            <div className="kpi-value">{report.onpage.imagesMissingAlt}</div>
+                            <div className="kpi-value">{report.pages && report.pages[0] ? report.pages[0].imagesMissingAlt : '-'}</div>
                             <div className="kpi-label">Images Missing Alt</div>
                           </div>
                         </div>
@@ -157,7 +160,7 @@ export default function Home() {
                         <div className="card kpi-card">
                           <div className="card-body">
                             <i className="fas fa-star fa-2x text-success mb-2"></i>
-                            <div className="kpi-value">{report.technical.brokenLinks}</div>
+                            <div className="kpi-value">{report.pages && report.pages[0] ? report.pages[0].brokenLinks : '-'}</div>
                             <div className="kpi-label">Broken Links</div>
                           </div>
                         </div>
@@ -166,7 +169,7 @@ export default function Home() {
                         <div className="card kpi-card">
                           <div className="card-body">
                             <i className="fas fa-mobile-alt fa-2x text-info mb-2"></i>
-                            <div className="kpi-value">{report.technical.mobileFriendly ? 'Yes' : 'No'}</div>
+                            <div className="kpi-value">{report.pages && report.pages[0] ? (report.pages[0].mobileFriendly ? 'Yes' : 'No') : '-'}</div>
                             <div className="kpi-label">Mobile Friendly</div>
                           </div>
                         </div>
@@ -248,81 +251,204 @@ export default function Home() {
                         <div className="tab-content" id="seoTabContent">
                           {activeTab === "technical" && (
                             <div className="tab-pane fade show active" id="technical" role="tabpanel">
-                              <ul>
-                                <li>robots.txt: {report.technical.robotsTxt ? 'Found' : 'Missing'}</li>
-                                <li>sitemap.xml: {report.technical.sitemapXml ? 'Found' : 'Missing'}</li>
-                                <li>HTTPS: {report.technical.https ? 'Yes' : 'No'}</li>
-                                <li>Mobile Friendly: {report.technical.mobileFriendly ? 'Yes' : 'No'}</li>
-                                <li>Structured Data: {report.technical.structuredData ? 'Yes' : 'No'}</li>
-                                <li>Canonical Tag: {report.technical.canonical ? 'Yes' : 'No'}</li>
-                                <li>Status Code: {report.technical.statusCode}</li>
-                                <li>Broken Links: {report.technical.brokenLinks}</li>
-                                <li>AMP: {report.technical.amp ? 'Yes' : 'No'}</li>
-                              </ul>
+                              <table className="table table-bordered table-sm">
+                                <thead>
+                                  <tr>
+                                    <th>URL</th>
+                                    <th>Status</th>
+                                    <th>robots.txt</th>
+                                    <th>sitemap.xml</th>
+                                    <th>HTTPS</th>
+                                    <th>Mobile Friendly</th>
+                                    <th>Structured Data</th>
+                                    <th>Canonical</th>
+                                    <th>Broken Links</th>
+                                    <th>AMP</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {report.pages && report.pages.length > 0 ? report.pages.map((p, i) => (
+                                    <tr key={i}>
+                                      <td>{p.url}</td>
+                                      <td>{p.statusCode}</td>
+                                      <td>{p.robotsTxt ? 'Found' : 'Missing'}</td>
+                                      <td>{p.sitemapXml ? 'Found' : 'Missing'}</td>
+                                      <td>{p.https ? 'Yes' : 'No'}</td>
+                                      <td>{p.mobileFriendly ? 'Yes' : 'No'}</td>
+                                      <td>{p.structuredData ? 'Yes' : 'No'}</td>
+                                      <td>{p.canonical ? 'Yes' : 'No'}</td>
+                                      <td>{p.brokenLinks}</td>
+                                      <td>{p.amp ? 'Yes' : 'No'}</td>
+                                    </tr>
+                                  )) : (
+                                    <tr><td colSpan={10}>No data</td></tr>
+                                  )}
+                                </tbody>
+                              </table>
                             </div>
                           )}
                           {activeTab === "onpage" && (
                             <div className="tab-pane fade show active" id="onpage" role="tabpanel">
-                              <ul>
-                                <li>Title: {report.onpage.title}</li>
-                                <li>Meta Description: {report.onpage.metaDescription}</li>
-                                <li>Keywords: {report.onpage.keywords}</li>
-                                <li>H1: {report.onpage.headings?.h1?.join(', ')}</li>
-                                <li>Images: {report.onpage.images?.length}</li>
-                                <li>Images Missing Alt: {report.onpage.imagesMissingAlt}</li>
-                                <li>Images Not Lazy: {report.onpage.imagesNotLazy}</li>
-                                <li>OG Title: {report.onpage.ogTitle}</li>
-                                <li>OG Description: {report.onpage.ogDescription}</li>
-                                <li>Twitter Card: {report.onpage.twitterCard}</li>
-                              </ul>
+                              <table className="table table-bordered table-sm">
+                                <thead>
+                                  <tr>
+                                    <th>URL</th>
+                                    <th>Title</th>
+                                    <th>Meta Description</th>
+                                    <th>H1</th>
+                                    <th>Images</th>
+                                    <th>Images Missing Alt</th>
+                                    <th>OG Title</th>
+                                    <th>OG Description</th>
+                                    <th>Twitter Card</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {report.pages && report.pages.length > 0 ? report.pages.map((p, i) => (
+                                    <tr key={i}>
+                                      <td>{p.url}</td>
+                                      <td>{p.title}</td>
+                                      <td>{p.metaDescription}</td>
+                                      <td>{p.h1}</td>
+                                      <td>{p.images}</td>
+                                      <td>{p.imagesMissingAlt}</td>
+                                      <td>{p.ogTitle}</td>
+                                      <td>{p.ogDescription}</td>
+                                      <td>{p.twitterCard}</td>
+                                    </tr>
+                                  )) : (
+                                    <tr><td colSpan={9}>No data</td></tr>
+                                  )}
+                                </tbody>
+                              </table>
                             </div>
                           )}
                           {activeTab === "internal" && (
                             <div className="tab-pane fade show active" id="internal" role="tabpanel">
-                              <ul>
-                                <li>Internal Links: {report.internalLinking.internalLinks}</li>
-                                <li>External Links: {report.internalLinking.externalLinks}</li>
-                                <li>Breadcrumbs: {report.internalLinking.breadcrumbs ? 'Yes' : 'No'}</li>
-                              </ul>
+                              <table className="table table-bordered table-sm">
+                                <thead>
+                                  <tr>
+                                    <th>URL</th>
+                                    <th>Internal Links</th>
+                                    <th>External Links</th>
+                                    <th>Breadcrumbs</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {report.pages && report.pages.length > 0 ? report.pages.map((p, i) => (
+                                    <tr key={i}>
+                                      <td>{p.url}</td>
+                                      <td>{p.internalLinks}</td>
+                                      <td>{p.externalLinks}</td>
+                                      <td>{p.breadcrumbs ? 'Yes' : 'No'}</td>
+                                    </tr>
+                                  )) : (
+                                    <tr><td colSpan={4}>No data</td></tr>
+                                  )}
+                                </tbody>
+                              </table>
                             </div>
                           )}
                           {activeTab === "offpage" && (
                             <div className="tab-pane fade show active" id="offpage" role="tabpanel">
-                              <ul>
-                                <li>Backlinks: {report.offpage.backlinks ?? 'N/A'}</li>
-                                <li>Toxic Links: {report.offpage.toxicLinks ?? 'N/A'}</li>
-                                <li>Competitor Backlinks: {report.offpage.competitorBacklinks ?? 'N/A'}</li>
-                                <li>Social Signals: {report.offpage.socialSignals ?? 'N/A'}</li>
-                                <li>Local Citations: {report.offpage.localCitations ?? 'N/A'}</li>
-                                <li>Google Business Profile: {report.offpage.googleBusinessProfile ?? 'N/A'}</li>
-                              </ul>
+                              <table className="table table-bordered table-sm">
+                                <thead>
+                                  <tr>
+                                    <th>URL</th>
+                                    <th>Backlinks</th>
+                                    <th>Toxic Links</th>
+                                    <th>Competitor Backlinks</th>
+                                    <th>Social Signals</th>
+                                    <th>Local Citations</th>
+                                    <th>Google Business Profile</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {report.pages && report.pages.length > 0 ? report.pages.map((p, i) => (
+                                    <tr key={i}>
+                                      <td>{p.url}</td>
+                                      <td>{p.backlinks ?? 'N/A'}</td>
+                                      <td>{p.toxicLinks ?? 'N/A'}</td>
+                                      <td>{p.competitorBacklinks ?? 'N/A'}</td>
+                                      <td>{p.socialSignals ?? 'N/A'}</td>
+                                      <td>{p.localCitations ?? 'N/A'}</td>
+                                      <td>{p.googleBusinessProfile ?? 'N/A'}</td>
+                                    </tr>
+                                  )) : (
+                                    <tr><td colSpan={7}>No data</td></tr>
+                                  )}
+                                </tbody>
+                              </table>
                             </div>
                           )}
                           {activeTab === "analytics" && (
                             <div className="tab-pane fade show active" id="analytics" role="tabpanel">
-                              <ul>
-                                <li>Google Analytics: {report.analytics.googleAnalytics ? 'Yes' : 'No'}</li>
-                                <li>Google Search Console: {report.analytics.googleSearchConsole ? 'Yes' : 'No'}</li>
-                                <li>Bing Webmaster: {report.analytics.bingWebmaster ? 'Yes' : 'No'}</li>
-                                <li>Organic Traffic: {report.analytics.organicTraffic ?? 'N/A'}</li>
-                                <li>Bounce Rate: {report.analytics.bounceRate ?? 'N/A'}</li>
-                                <li>Conversion Rate: {report.analytics.conversionRate ?? 'N/A'}</li>
-                                <li>Keyword Rankings: {report.analytics.keywordRankings ?? 'N/A'}</li>
-                                <li>Crawl Errors: {report.analytics.crawlErrors ?? 'N/A'}</li>
-                                <li>Indexed Pages: {report.analytics.indexedPages ?? 'N/A'}</li>
-                              </ul>
+                              <table className="table table-bordered table-sm">
+                                <thead>
+                                  <tr>
+                                    <th>URL</th>
+                                    <th>Google Analytics</th>
+                                    <th>Google Search Console</th>
+                                    <th>Bing Webmaster</th>
+                                    <th>Organic Traffic</th>
+                                    <th>Bounce Rate</th>
+                                    <th>Conversion Rate</th>
+                                    <th>Keyword Rankings</th>
+                                    <th>Crawl Errors</th>
+                                    <th>Indexed Pages</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {report.pages && report.pages.length > 0 ? report.pages.map((p, i) => (
+                                    <tr key={i}>
+                                      <td>{p.url}</td>
+                                      <td>{p.googleAnalytics ? 'Yes' : 'No'}</td>
+                                      <td>{p.googleSearchConsole ? 'Yes' : 'No'}</td>
+                                      <td>{p.bingWebmaster ? 'Yes' : 'No'}</td>
+                                      <td>{p.organicTraffic ?? 'N/A'}</td>
+                                      <td>{p.bounceRate ?? 'N/A'}</td>
+                                      <td>{p.conversionRate ?? 'N/A'}</td>
+                                      <td>{p.keywordRankings ?? 'N/A'}</td>
+                                      <td>{p.crawlErrors ?? 'N/A'}</td>
+                                      <td>{p.indexedPages ?? 'N/A'}</td>
+                                    </tr>
+                                  )) : (
+                                    <tr><td colSpan={10}>No data</td></tr>
+                                  )}
+                                </tbody>
+                              </table>
                             </div>
                           )}
                           {activeTab === "ux" && (
                             <div className="tab-pane fade show active" id="ux" role="tabpanel">
-                              <ul>
-                                <li>Fast Load: {report.ux.fastLoad ? 'Yes' : 'No'}</li>
-                                <li>Clear Navigation: {report.ux.clearNav ? 'Yes' : 'No'}</li>
-                                <li>Mobile Usability: {report.ux.mobileUsability ? 'Yes' : 'No'}</li>
-                                <li>No Popups: {report.ux.noPopups ? 'Yes' : 'No'}</li>
-                                <li>Accessible: {report.ux.accessible ? 'Yes' : 'No'}</li>
-                                <li>Consistent Branding: {report.ux.consistentBranding ? 'Yes' : 'No'}</li>
-                              </ul>
+                              <table className="table table-bordered table-sm">
+                                <thead>
+                                  <tr>
+                                    <th>URL</th>
+                                    <th>Fast Load</th>
+                                    <th>Clear Navigation</th>
+                                    <th>Mobile Usability</th>
+                                    <th>No Popups</th>
+                                    <th>Accessible</th>
+                                    <th>Consistent Branding</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {report.pages && report.pages.length > 0 ? report.pages.map((p, i) => (
+                                    <tr key={i}>
+                                      <td>{p.url}</td>
+                                      <td>{p.fastLoad ? 'Yes' : 'No'}</td>
+                                      <td>{p.clearNav ? 'Yes' : 'No'}</td>
+                                      <td>{p.mobileUsability ? 'Yes' : 'No'}</td>
+                                      <td>{p.noPopups ? 'Yes' : 'No'}</td>
+                                      <td>{p.accessible ? 'Yes' : 'No'}</td>
+                                      <td>{p.consistentBranding ? 'Yes' : 'No'}</td>
+                                    </tr>
+                                  )) : (
+                                    <tr><td colSpan={7}>No data</td></tr>
+                                  )}
+                                </tbody>
+                              </table>
                             </div>
                           )}
                         </div>
@@ -343,19 +469,25 @@ export default function Home() {
                             </tr>
                           </thead>
                           <tbody>
-                            <tr><td>URL</td><td>{report.pageAudit.url}</td></tr>
-                            <tr><td>Title Tag</td><td>{report.pageAudit.title}</td></tr>
-                            <tr><td>Meta Description</td><td>{report.pageAudit.metaDescription}</td></tr>
-                            <tr><td>H1 Tag</td><td>{report.pageAudit.h1}</td></tr>
-                            <tr><td>Internal Links</td><td>{report.pageAudit.internalLinks}</td></tr>
-                            <tr><td>External Links</td><td>{report.pageAudit.externalLinks}</td></tr>
-                            <tr><td>Images</td><td>{report.pageAudit.images}</td></tr>
-                            <tr><td>Images With Alt</td><td>{report.pageAudit.imagesWithAlt}</td></tr>
-                            <tr><td>Structured Data</td><td>{report.pageAudit.structuredData ? 'Yes' : 'No'}</td></tr>
-                            <tr><td>Mobile Friendly</td><td>{report.pageAudit.mobileFriendly ? 'Yes' : 'No'}</td></tr>
-                            <tr><td>Indexable</td><td>{report.pageAudit.indexable ? 'Yes' : 'No'}</td></tr>
-                            <tr><td>Canonical Tag</td><td>{report.pageAudit.canonical}</td></tr>
-                            <tr><td>Social Tags</td><td>{report.pageAudit.socialTags ? 'Yes' : 'No'}</td></tr>
+                            {report.pages && report.pages[0] ? (
+                              <>
+                                <tr><td>URL</td><td>{report.pages[0].url}</td></tr>
+                                <tr><td>Title Tag</td><td>{report.pages[0].title}</td></tr>
+                                <tr><td>Meta Description</td><td>{report.pages[0].metaDescription}</td></tr>
+                                <tr><td>H1 Tag</td><td>{report.pages[0].h1}</td></tr>
+                                <tr><td>Internal Links</td><td>{report.pages[0].internalLinks}</td></tr>
+                                <tr><td>External Links</td><td>{report.pages[0].externalLinks}</td></tr>
+                                <tr><td>Images</td><td>{report.pages[0].images}</td></tr>
+                                <tr><td>Images With Alt</td><td>{report.pages[0].imagesWithAlt}</td></tr>
+                                <tr><td>Structured Data</td><td>{report.pages[0].structuredData ? 'Yes' : 'No'}</td></tr>
+                                <tr><td>Mobile Friendly</td><td>{report.pages[0].mobileFriendly ? 'Yes' : 'No'}</td></tr>
+                                <tr><td>Indexable</td><td>{report.pages[0].indexable ? 'Yes' : 'No'}</td></tr>
+                                <tr><td>Canonical Tag</td><td>{report.pages[0].canonical}</td></tr>
+                                <tr><td>Social Tags</td><td>{report.pages[0].socialTags ? 'Yes' : 'No'}</td></tr>
+                              </>
+                            ) : (
+                              <tr><td colSpan={2}>No page data available.</td></tr>
+                            )}
                           </tbody>
                         </table>
                       </div>
