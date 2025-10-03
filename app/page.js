@@ -6,11 +6,8 @@ import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function Home() {
   const [url, setUrl] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [activeSection, setActiveSection] = useState("dashboard");
   const [activeTab, setActiveTab] = useState("technical");
-  const [search, setSearch] = useState("");
   const { report, loading: reportLoading, error: reportError, analyze } = useSeoReport();
 
   const sidebarMenu = [
@@ -53,13 +50,13 @@ export default function Home() {
                   onChange={e => setUrl(e.target.value)}
                   required
                   style={{ borderRadius: 50, paddingLeft: 20, height: 45 }}
-                  disabled={loading}
+                  disabled={reportLoading}
                 />
-                <button className="btn btn-light rounded-pill px-4" type="submit" disabled={loading}>
-                  {loading ? <span className="spinner-border spinner-border-sm"></span> : <><i className="fas fa-search me-2"></i>Analyze</>}
+                <button className="btn btn-light rounded-pill px-4" type="submit" disabled={reportLoading}>
+                  {reportLoading ? <span className="spinner-border spinner-border-sm"></span> : <><i className="fas fa-search me-2"></i>Analyze</>}
                 </button>
               </form>
-              {error && <div className="alert alert-danger mt-2">{error}</div>}
+              {reportError && <div className="alert alert-danger mt-2">{reportError}</div>}
             </div>
           </div>
         </div>
@@ -86,11 +83,28 @@ export default function Home() {
                 <h6 className="fw-bold">Website Overview</h6>
                 <div className="d-flex align-items-center mt-3">
                   <div className="flex-shrink-0">
-                    <img src="https://via.placeholder.com/50" alt="Website" className="rounded" width={50} height={50} />
+                    {report && report.pageAudit.url ? (
+                      <img
+                        src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent((new URL(report.pageAudit.url)).hostname)}&sz=64`}
+                        alt="Favicon"
+                        className="rounded"
+                        width={50}
+                        height={50}
+                        style={{ background: '#fff', border: '1px solid #eee' }}
+                      />
+                    ) : (
+                      <img src="/seo-analyzer-logo.svg" alt="Logo" className="rounded" width={50} height={50} />
+                    )}
                   </div>
                   <div className="flex-grow-1 ms-3">
-                    <h6 className="mb-0">ExampleWebsite.com</h6>
-                    <small className="text-muted">Last updated: 2 hours ago</small>
+                    <h6 className="mb-0">
+                      {report && report.pageAudit.url
+                        ? (new URL(report.pageAudit.url)).hostname
+                        : 'Website'}
+                    </h6>
+                    <small className="text-muted">
+                      {report && report.pageAudit.url ? `Analyzed: ${new Date().toLocaleString()}` : 'No analysis yet'}
+                    </small>
                   </div>
                 </div>
               </div>
@@ -119,13 +133,13 @@ export default function Home() {
                 {/* Show dashboard only when report is loaded */}
                 {report && (
                   <>
-                    {/* KPI Cards */}
+                    {/* KPI Cards (example: show key technical/onpage KPIs) */}
                     <div className="row">
                       <div className="col-md-3 col-sm-6">
                         <div className="card kpi-card">
                           <div className="card-body">
                             <i className="fas fa-file-alt fa-2x text-primary mb-2"></i>
-                            <div className="kpi-value">{report.totalPages}</div>
+                            <div className="kpi-value">{report.pageAudit ? 1 : 0}</div>
                             <div className="kpi-label">Total Pages</div>
                           </div>
                         </div>
@@ -134,8 +148,8 @@ export default function Home() {
                         <div className="card kpi-card">
                           <div className="card-body">
                             <i className="fas fa-image fa-2x text-warning mb-2"></i>
-                            <div className="kpi-value">{report.imagesMissingAlt}</div>
-                            <div className="kpi-label">Without Alt Tags</div>
+                            <div className="kpi-value">{report.onpage.imagesMissingAlt}</div>
+                            <div className="kpi-label">Images Missing Alt</div>
                           </div>
                         </div>
                       </div>
@@ -143,39 +157,83 @@ export default function Home() {
                         <div className="card kpi-card">
                           <div className="card-body">
                             <i className="fas fa-star fa-2x text-success mb-2"></i>
-                            <div className="kpi-value">{report.onpageSeoScore}%</div>
-                            <div className="kpi-label">Onpage SEO</div>
+                            <div className="kpi-value">{report.technical.brokenLinks}</div>
+                            <div className="kpi-label">Broken Links</div>
                           </div>
                         </div>
                       </div>
                       <div className="col-md-3 col-sm-6">
                         <div className="card kpi-card">
                           <div className="card-body">
-                            <i className="fas fa-unlink fa-2x text-danger mb-2"></i>
-                            <div className="kpi-value">{report.brokenLinks}</div>
-                            <div className="kpi-label">Broken Links</div>
+                            <i className="fas fa-mobile-alt fa-2x text-info mb-2"></i>
+                            <div className="kpi-value">{report.technical.mobileFriendly ? 'Yes' : 'No'}</div>
+                            <div className="kpi-label">Mobile Friendly</div>
                           </div>
                         </div>
                       </div>
                     </div>
-                    {/* SEO Analysis Checklist */}
-                    <div className="card">
+                    {/* SEO Audit Tabs */}
+                    <div className="card mt-4">
                       <div className="card-header d-flex justify-content-between align-items-center">
                         <div>
                           <i className="fas fa-list-check section-icon"></i>
-                          SEO Analysis Checklist
+                          SEO Audit Checklist
                         </div>
                         <div>
-                          <span className="badge bg-primary">Updated Today</span>
+                          <span className="badge bg-primary">Updated</span>
                         </div>
                       </div>
                       <div className="card-body">
                         <ul className="nav nav-pills mb-4" id="seoTabs" role="tablist">
                           <li className="nav-item" role="presentation">
+                            <button className={`nav-link${activeTab === "pages" ? " active" : ""}`} id="pages-tab" type="button" role="tab" onClick={() => setActiveTab("pages")}>Pages</button>
+                          </li>
+                          {activeTab === "pages" && (
+                            <div className="tab-pane fade show active" id="pages" role="tabpanel">
+                              <h5>Analyzed Pages</h5>
+                              <table className="table table-bordered">
+                                <thead>
+                                  <tr>
+                                    <th>URL</th>
+                                    <th>Title</th>
+                                    <th>Status</th>
+                                    <th>Meta Description</th>
+                                    <th>H1</th>
+                                    <th>Internal Links</th>
+                                    <th>External Links</th>
+                                    <th>Images</th>
+                                    <th>Mobile Friendly</th>
+                                    <th>Indexable</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {report.pageAudit && (
+                                    <tr>
+                                      <td>{report.pageAudit.url}</td>
+                                      <td>{report.pageAudit.title}</td>
+                                      <td>{report.technical.statusCode}</td>
+                                      <td>{report.pageAudit.metaDescription}</td>
+                                      <td>{report.pageAudit.h1}</td>
+                                      <td>{report.pageAudit.internalLinks}</td>
+                                      <td>{report.pageAudit.externalLinks}</td>
+                                      <td>{report.pageAudit.images}</td>
+                                      <td>{report.pageAudit.mobileFriendly ? 'Yes' : 'No'}</td>
+                                      <td>{report.pageAudit.indexable ? 'Yes' : 'No'}</td>
+                                    </tr>
+                                  )}
+                                </tbody>
+                              </table>
+                              <div className="alert alert-info">Multi-page support coming soon. This table will show all pages when full crawling is implemented.</div>
+                            </div>
+                          )}
+                          <li className="nav-item" role="presentation">
                             <button className={`nav-link${activeTab === "technical" ? " active" : ""}`} id="technical-tab" type="button" role="tab" onClick={() => setActiveTab("technical")}>Technical SEO</button>
                           </li>
                           <li className="nav-item" role="presentation">
                             <button className={`nav-link${activeTab === "onpage" ? " active" : ""}`} id="onpage-tab" type="button" role="tab" onClick={() => setActiveTab("onpage")}>On-Page SEO</button>
+                          </li>
+                          <li className="nav-item" role="presentation">
+                            <button className={`nav-link${activeTab === "internal" ? " active" : ""}`} id="internal-tab" type="button" role="tab" onClick={() => setActiveTab("internal")}>Internal Linking</button>
                           </li>
                           <li className="nav-item" role="presentation">
                             <button className={`nav-link${activeTab === "offpage" ? " active" : ""}`} id="offpage-tab" type="button" role="tab" onClick={() => setActiveTab("offpage")}>Off-Page SEO</button>
@@ -190,284 +248,116 @@ export default function Home() {
                         <div className="tab-content" id="seoTabContent">
                           {activeTab === "technical" && (
                             <div className="tab-pane fade show active" id="technical" role="tabpanel">
-                              <div className="checklist-item">
-                                <div className="d-flex justify-content-between align-items-center">
-                                  <div>
-                                    <span className="status-indicator status-complete"></span>
-                                    Check robots.txt and ensure important pages are not blocked
-                                  </div>
-                                  <span className="badge bg-success">Complete</span>
-                                </div>
-                              </div>
-                              <div className="checklist-item">
-                                <div className="d-flex justify-content-between align-items-center">
-                                  <div>
-                                    <span className="status-indicator status-complete"></span>
-                                    Verify XML sitemap is submitted to Google Search Console
-                                  </div>
-                                  <span className="badge bg-success">Complete</span>
-                                </div>
-                              </div>
-                              <div className="checklist-item">
-                                <div className="d-flex justify-content-between align-items-center">
-                                  <div>
-                                    <span className="status-indicator status-complete"></span>
-                                    Ensure HTTPS is enabled and SSL certificate is valid
-                                  </div>
-                                  <span className="badge bg-success">Complete</span>
-                                </div>
-                              </div>
-                              <div className="checklist-item">
-                                <div className="d-flex justify-content-between align-items-center">
-                                  <div>
-                                    <span className="status-indicator status-in-progress"></span>
-                                    Test with Google PageSpeed Insights and Core Web Vitals
-                                  </div>
-                                  <span className="badge bg-warning">In Progress</span>
-                                </div>
-                              </div>
-                              <div className="checklist-item">
-                                <div className="d-flex justify-content-between align-items-center">
-                                  <div>
-                                    <span className="status-indicator status-in-progress"></span>
-                                    Optimize images and enable lazy loading
-                                  </div>
-                                  <span className="badge bg-warning">In Progress</span>
-                                </div>
-                              </div>
-                              <div className="checklist-item">
-                                <div className="d-flex justify-content-between align-items-center">
-                                  <div>
-                                    <span className="status-indicator status-not-started"></span>
-                                    Implement schema markup and validate with Rich Results Test
-                                  </div>
-                                  <span className="badge bg-secondary">Not Started</span>
-                                </div>
-                              </div>
+                              <ul>
+                                <li>robots.txt: {report.technical.robotsTxt ? 'Found' : 'Missing'}</li>
+                                <li>sitemap.xml: {report.technical.sitemapXml ? 'Found' : 'Missing'}</li>
+                                <li>HTTPS: {report.technical.https ? 'Yes' : 'No'}</li>
+                                <li>Mobile Friendly: {report.technical.mobileFriendly ? 'Yes' : 'No'}</li>
+                                <li>Structured Data: {report.technical.structuredData ? 'Yes' : 'No'}</li>
+                                <li>Canonical Tag: {report.technical.canonical ? 'Yes' : 'No'}</li>
+                                <li>Status Code: {report.technical.statusCode}</li>
+                                <li>Broken Links: {report.technical.brokenLinks}</li>
+                                <li>AMP: {report.technical.amp ? 'Yes' : 'No'}</li>
+                              </ul>
                             </div>
                           )}
                           {activeTab === "onpage" && (
                             <div className="tab-pane fade show active" id="onpage" role="tabpanel">
-                              <div className="checklist-item">
-                                <div className="d-flex justify-content-between align-items-center">
-                                  <div>
-                                    <span className="status-indicator status-complete"></span>
-                                    Perform keyword research for each page
-                                  </div>
-                                  <span className="badge bg-success">Complete</span>
-                                </div>
-                              </div>
-                              <div className="checklist-item">
-                                <div className="d-flex justify-content-between align-items-center">
-                                  <div>
-                                    <span className="status-indicator status-in-progress"></span>
-                                    Use primary and secondary keywords naturally
-                                  </div>
-                                  <span className="badge bg-warning">In Progress</span>
-                                </div>
-                              </div>
-                              <div className="checklist-item">
-                                <div className="d-flex justify-content-between align-items-center">
-                                  <div>
-                                    <span className="status-indicator status-in-progress"></span>
-                                    Write unique and compelling title tags
-                                  </div>
-                                  <span className="badge bg-warning">In Progress</span>
-                                </div>
-                              </div>
-                              <div className="checklist-item">
-                                <div className="d-flex justify-content-between align-items-center">
-                                  <div>
-                                    <span className="status-indicator status-not-started"></span>
-                                    Write meta descriptions with keywords
-                                  </div>
-                                  <span className="badge bg-secondary">Not Started</span>
-                                </div>
-                              </div>
-                              <div className="checklist-item">
-                                <div className="d-flex justify-content-between align-items-center">
-                                  <div>
-                                    <span className="status-indicator status-not-started"></span>
-                                    Use alt text for all images
-                                  </div>
-                                  <span className="badge bg-secondary">Not Started</span>
-                                </div>
-                              </div>
+                              <ul>
+                                <li>Title: {report.onpage.title}</li>
+                                <li>Meta Description: {report.onpage.metaDescription}</li>
+                                <li>Keywords: {report.onpage.keywords}</li>
+                                <li>H1: {report.onpage.headings?.h1?.join(', ')}</li>
+                                <li>Images: {report.onpage.images?.length}</li>
+                                <li>Images Missing Alt: {report.onpage.imagesMissingAlt}</li>
+                                <li>Images Not Lazy: {report.onpage.imagesNotLazy}</li>
+                                <li>OG Title: {report.onpage.ogTitle}</li>
+                                <li>OG Description: {report.onpage.ogDescription}</li>
+                                <li>Twitter Card: {report.onpage.twitterCard}</li>
+                              </ul>
+                            </div>
+                          )}
+                          {activeTab === "internal" && (
+                            <div className="tab-pane fade show active" id="internal" role="tabpanel">
+                              <ul>
+                                <li>Internal Links: {report.internalLinking.internalLinks}</li>
+                                <li>External Links: {report.internalLinking.externalLinks}</li>
+                                <li>Breadcrumbs: {report.internalLinking.breadcrumbs ? 'Yes' : 'No'}</li>
+                              </ul>
                             </div>
                           )}
                           {activeTab === "offpage" && (
                             <div className="tab-pane fade show active" id="offpage" role="tabpanel">
-                              <ul className="list-group mb-4">
-                                <li className="list-group-item d-flex justify-content-between align-items-center">
-                                  <span><i className="fas fa-link me-2 text-info"></i>Build quality backlinks from reputable sources</span>
-                                  <span className="badge bg-warning">In Progress</span>
-                                </li>
-                                <li className="list-group-item d-flex justify-content-between align-items-center">
-                                  <span><i className="fas fa-bullhorn me-2 text-primary"></i>Monitor brand mentions and citations</span>
-                                  <span className="badge bg-secondary">Not Started</span>
-                                </li>
-                                <li className="list-group-item d-flex justify-content-between align-items-center">
-                                  <span><i className="fas fa-share-alt me-2 text-success"></i>Engage on social media platforms</span>
-                                  <span className="badge bg-success">Complete</span>
-                                </li>
+                              <ul>
+                                <li>Backlinks: {report.offpage.backlinks ?? 'N/A'}</li>
+                                <li>Toxic Links: {report.offpage.toxicLinks ?? 'N/A'}</li>
+                                <li>Competitor Backlinks: {report.offpage.competitorBacklinks ?? 'N/A'}</li>
+                                <li>Social Signals: {report.offpage.socialSignals ?? 'N/A'}</li>
+                                <li>Local Citations: {report.offpage.localCitations ?? 'N/A'}</li>
+                                <li>Google Business Profile: {report.offpage.googleBusinessProfile ?? 'N/A'}</li>
                               </ul>
-                              <div className="alert alert-info">Off-page SEO focuses on activities outside your website to improve rankings.</div>
                             </div>
                           )}
                           {activeTab === "analytics" && (
                             <div className="tab-pane fade show active" id="analytics" role="tabpanel">
-                              <ul className="list-group mb-4">
-                                <li className="list-group-item d-flex justify-content-between align-items-center">
-                                  <span><i className="fas fa-chart-pie me-2 text-success"></i>Google Analytics is installed and tracking</span>
-                                  <span className="badge bg-success">Complete</span>
-                                </li>
-                                <li className="list-group-item d-flex justify-content-between align-items-center">
-                                  <span><i className="fas fa-search me-2 text-info"></i>Google Search Console is connected</span>
-                                  <span className="badge bg-success">Complete</span>
-                                </li>
-                                <li className="list-group-item d-flex justify-content-between align-items-center">
-                                  <span><i className="fas fa-bullseye me-2 text-warning"></i>Set up conversion tracking for key actions</span>
-                                  <span className="badge bg-warning">In Progress</span>
-                                </li>
+                              <ul>
+                                <li>Google Analytics: {report.analytics.googleAnalytics ? 'Yes' : 'No'}</li>
+                                <li>Google Search Console: {report.analytics.googleSearchConsole ? 'Yes' : 'No'}</li>
+                                <li>Bing Webmaster: {report.analytics.bingWebmaster ? 'Yes' : 'No'}</li>
+                                <li>Organic Traffic: {report.analytics.organicTraffic ?? 'N/A'}</li>
+                                <li>Bounce Rate: {report.analytics.bounceRate ?? 'N/A'}</li>
+                                <li>Conversion Rate: {report.analytics.conversionRate ?? 'N/A'}</li>
+                                <li>Keyword Rankings: {report.analytics.keywordRankings ?? 'N/A'}</li>
+                                <li>Crawl Errors: {report.analytics.crawlErrors ?? 'N/A'}</li>
+                                <li>Indexed Pages: {report.analytics.indexedPages ?? 'N/A'}</li>
                               </ul>
-                              <div className="alert alert-info">Analytics help you measure and optimize your SEO efforts.</div>
                             </div>
                           )}
                           {activeTab === "ux" && (
                             <div className="tab-pane fade show active" id="ux" role="tabpanel">
-                              <ul className="list-group mb-4">
-                                <li className="list-group-item d-flex justify-content-between align-items-center">
-                                  <span><i className="fas fa-mobile-alt me-2 text-primary"></i>Ensure mobile-friendly and responsive design</span>
-                                  <span className="badge bg-success">Complete</span>
-                                </li>
-                                <li className="list-group-item d-flex justify-content-between align-items-center">
-                                  <span><i className="fas fa-tachometer-alt me-2 text-info"></i>Improve page load speed and interactivity</span>
-                                  <span className="badge bg-warning">In Progress</span>
-                                </li>
-                                <li className="list-group-item d-flex justify-content-between align-items-center">
-                                  <span><i className="fas fa-eye me-2 text-secondary"></i>Use accessible colors and readable fonts</span>
-                                  <span className="badge bg-secondary">Not Started</span>
-                                </li>
+                              <ul>
+                                <li>Fast Load: {report.ux.fastLoad ? 'Yes' : 'No'}</li>
+                                <li>Clear Navigation: {report.ux.clearNav ? 'Yes' : 'No'}</li>
+                                <li>Mobile Usability: {report.ux.mobileUsability ? 'Yes' : 'No'}</li>
+                                <li>No Popups: {report.ux.noPopups ? 'Yes' : 'No'}</li>
+                                <li>Accessible: {report.ux.accessible ? 'Yes' : 'No'}</li>
+                                <li>Consistent Branding: {report.ux.consistentBranding ? 'Yes' : 'No'}</li>
                               </ul>
-                              <div className="alert alert-info">Good UX ensures visitors have a positive experience on your site.</div>
                             </div>
                           )}
                         </div>
                       </div>
                     </div>
                     {/* Page-Level Audit */}
-                    <div className="card">
+                    <div className="card mt-4">
                       <div className="card-header">
                         <i className="fas fa-file-alt section-icon"></i>
-                        Page-Level Audit
+                        Page Audit
                       </div>
                       <div className="card-body">
-                        <div className="row">
-                          <div className="col-md-6">
-                            <div className="page-audit-item">
-                              <div className="page-score score-excellent">92</div>
-                              <div>
-                                <h6 className="mb-1">Homepage</h6>
-                                <small className="text-muted">Last updated: 2 days ago</small>
-                              </div>
-                            </div>
-                            <div className="page-audit-item">
-                              <div className="page-score score-good">78</div>
-                              <div>
-                                <h6 className="mb-1">About Us</h6>
-                                <small className="text-muted">Last updated: 1 week ago</small>
-                              </div>
-                            </div>
-                            <div className="page-audit-item">
-                              <div className="page-score score-poor">45</div>
-                              <div>
-                                <h6 className="mb-1">Services</h6>
-                                <small className="text-muted">Last updated: 3 weeks ago</small>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-md-6">
-                            <div className="page-audit-item">
-                              <div className="page-score score-excellent">88</div>
-                              <div>
-                                <h6 className="mb-1">Blog</h6>
-                                <small className="text-muted">Last updated: 1 day ago</small>
-                              </div>
-                            </div>
-                            <div className="page-audit-item">
-                              <div className="page-score score-good">72</div>
-                              <div>
-                                <h6 className="mb-1">Contact</h6>
-                                <small className="text-muted">Last updated: 2 weeks ago</small>
-                              </div>
-                            </div>
-                            <div className="page-audit-item">
-                              <div className="page-score score-poor">52</div>
-                              <div>
-                                <h6 className="mb-1">Portfolio</h6>
-                                <small className="text-muted">Last updated: 1 month ago</small>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-center mt-3">
-                          <button className="btn btn-outline-primary">View All Pages</button>
-                        </div>
-                      </div>
-                    </div>
-                    {/* Recommendations */}
-                    <div className="card">
-                      <div className="card-header">
-                        <i className="fas fa-lightbulb section-icon"></i>
-                        Top Recommendations
-                      </div>
-                      <div className="card-body">
-                        <div className="row">
-                          <div className="col-md-6 mb-3">
-                            <div className="d-flex">
-                              <div className="flex-shrink-0">
-                                <span className="badge bg-danger me-2">High</span>
-                              </div>
-                              <div className="flex-grow-1">
-                                <h6 className="mb-1">Improve Page Load Speed</h6>
-                                <p className="mb-0 text-muted">Your homepage takes 3.2 seconds to load. Consider optimizing images and reducing render-blocking resources.</p>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-md-6 mb-3">
-                            <div className="d-flex">
-                              <div className="flex-shrink-0">
-                                <span className="badge bg-warning me-2">Medium</span>
-                              </div>
-                              <div className="flex-grow-1">
-                                <h6 className="mb-1">Add Missing Meta Descriptions</h6>
-                                <p className="mb-0 text-muted">12 pages are missing meta descriptions which can impact click-through rates.</p>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-md-6 mb-3">
-                            <div className="d-flex">
-                              <div className="flex-shrink-0">
-                                <span className="badge bg-warning me-2">Medium</span>
-                              </div>
-                              <div className="flex-grow-1">
-                                <h6 className="mb-1">Fix Broken Internal Links</h6>
-                                <p className="mb-0 text-muted">We found 7 broken internal links that may be affecting user experience and crawlability.</p>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-md-6 mb-3">
-                            <div className="d-flex">
-                              <div className="flex-shrink-0">
-                                <span className="badge bg-info me-2">Low</span>
-                              </div>
-                              <div className="flex-grow-1">
-                                <h6 className="mb-1">Optimize for Featured Snippets</h6>
-                                <p className="mb-0 text-muted">5 of your pages have potential to rank for featured snippets with minor content adjustments.</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                        <table className="table table-bordered">
+                          <thead>
+                            <tr>
+                              <th>Element</th>
+                              <th>Value</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr><td>URL</td><td>{report.pageAudit.url}</td></tr>
+                            <tr><td>Title Tag</td><td>{report.pageAudit.title}</td></tr>
+                            <tr><td>Meta Description</td><td>{report.pageAudit.metaDescription}</td></tr>
+                            <tr><td>H1 Tag</td><td>{report.pageAudit.h1}</td></tr>
+                            <tr><td>Internal Links</td><td>{report.pageAudit.internalLinks}</td></tr>
+                            <tr><td>External Links</td><td>{report.pageAudit.externalLinks}</td></tr>
+                            <tr><td>Images</td><td>{report.pageAudit.images}</td></tr>
+                            <tr><td>Images With Alt</td><td>{report.pageAudit.imagesWithAlt}</td></tr>
+                            <tr><td>Structured Data</td><td>{report.pageAudit.structuredData ? 'Yes' : 'No'}</td></tr>
+                            <tr><td>Mobile Friendly</td><td>{report.pageAudit.mobileFriendly ? 'Yes' : 'No'}</td></tr>
+                            <tr><td>Indexable</td><td>{report.pageAudit.indexable ? 'Yes' : 'No'}</td></tr>
+                            <tr><td>Canonical Tag</td><td>{report.pageAudit.canonical}</td></tr>
+                            <tr><td>Social Tags</td><td>{report.pageAudit.socialTags ? 'Yes' : 'No'}</td></tr>
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   </>
